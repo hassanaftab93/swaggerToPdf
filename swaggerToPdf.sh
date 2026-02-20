@@ -17,7 +17,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 # ── Defaults ─────────────────────────────────────────────────
-DEFAULT_URL="https://azdev-bffweb.reeft.com/swagger/v1/swagger.json"
+DEFAULT_URL="https://xyz.com/swagger/v1/swagger.json"
 SWAGGER_URL="${1:-$DEFAULT_URL}"
 OUTPUT_PDF="${2:-api-docs.pdf}"
 SWAGGER_JSON="./swagger.json"
