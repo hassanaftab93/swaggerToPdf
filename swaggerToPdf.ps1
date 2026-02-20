@@ -6,7 +6,7 @@
 
 [CmdletBinding()]
 param (
-    [string]$SwaggerUrl = "https://azdev-bffweb.reeft.com/swagger/v1/swagger.json",
+    [string]$SwaggerUrl = "https://xyz.com/swagger/v1/swagger.json",
     [string]$OutputPdf  = "api-docs.pdf"
 )
 
