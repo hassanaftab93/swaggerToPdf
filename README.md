@@ -1,73 +1,105 @@
-# Linux Script:
+# Swagger → PDF Generator
 
-## Usage
+Convert a Swagger/OpenAPI JSON spec into a clean PDF document using Docker — no local dependencies beyond `curl` and Docker itself.
 
-```bash
-  chmod +x swaggerToPdf.sh
-```
-
-## Custom URL and output filename
-
-```bash
-  ./swaggerToPdf.sh https://your-api/swagger/v1/swagger.json my-api.pdf
-```
-
-## What it does:
-
-- Takes the Swagger URL and output filename as arguments (both optional with sensible defaults)
-
-- Pre-flight checks Docker and curl are available before running anything
-
-- Runs all 3 steps with clear numbered progress logging
-
-- Validates output at each step — exits with a clear error message if something fails
-
-- Cleans up temp files (swagger.json, index.html, openapi-generator artifacts) after PDF is created
-
-- Color-coded output so it's easy to read in pipeline logs
-
-## For Azure DevOps, just call it as a script step:
-
-  ```yaml
-    - script: |
-        chmod +x swaggerToPdf.sh
-        ./swaggerToPdf.sh https://azdev-bffweb.reeft.com/swagger/v1/swagger.json api-docs.pdf
-      displayName: 'Generate API Documentation PDF'
-
-    - publish: $(System.DefaultWorkingDirectory)/api-docs.pdf
-      artifact: SwaggerDocs
-  ```
+Works on **Linux/macOS** (`swaggerToPdf.sh`) and **Windows** (`swaggerToPdf.ps1`).
 
 ---
-# Windows Script
 
-## Usage
+## How it works
 
-```powershell
-  .\swaggerToPdf.ps1
+The scripts run three steps automatically:
+
+1. **Download** the Swagger JSON from a URL via `curl`
+2. **Generate HTML** docs using [`openapitools/openapi-generator-cli`](https://hub.docker.com/r/openapitools/openapi-generator-cli) (Docker)
+3. **Convert to PDF** using headless Chromium via [`zenika/alpine-chrome`](https://hub.docker.com/r/zenika/alpine-chrome) (Docker)
+
+Temporary files (`swagger.json`, `index.html`, openapi-generator artifacts) are cleaned up automatically after the PDF is created.
+
+---
+
+## Prerequisites
+
+| Dependency | Notes |
+|---|---|
+| `curl` | Used to download the Swagger JSON |
+| `docker` | Must be installed and the daemon must be running |
+
+---
+
+## Linux / macOS
+
+### Quick start
+
+```bash
+chmod +x swaggerToPdf.sh
+./swaggerToPdf.sh
 ```
 
-## Custom URL and output name
+### Custom URL and output filename
 
-```powershell
-  .\swaggerToPdf.ps1 -SwaggerUrl "https://your-api/swagger/v1/swagger.json" -OutputPdf "my-api.pdf"
+```bash
+./swaggerToPdf.sh https://your-api/swagger/v1/swagger.json my-api.pdf
 ```
 
-## If you hit execution policy issues:
+Both arguments are optional — defaults are used if omitted.
 
-```powershell
-  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass .\swaggerToPdf.ps1
+### Azure DevOps pipeline (Linux agent)
+
+```yaml
+- script: |
+    chmod +x swaggerToPdf.sh
+    ./swaggerToPdf.sh https://your-api/swagger/v1/swagger.json api-docs.pdf
+  displayName: 'Generate API Documentation PDF'
+
+- publish: $(System.DefaultWorkingDirectory)/api-docs.pdf
+  artifact: SwaggerDocs
 ```
 
-## For Azure DevOps (Windows agent):
+---
 
-  ```yaml
-    - task: PowerShell@2
-      displayName: 'Generate API Documentation PDF'
-      inputs:
-        filePath: 'swaggerToPdf.ps1'
-        arguments: '-SwaggerUrl "https://azdev-bffweb.reeft.com/swagger/v1/swagger.json" -OutputPdf "api-docs.pdf"'
+## Windows
 
-    - publish: $(System.DefaultWorkingDirectory)/api-docs.pdf
-      artifact: SwaggerDocs
-  ```
+### Quick start
+
+```powershell
+.\swaggerToPdf.ps1
+```
+
+### Custom URL and output filename
+
+```powershell
+.\swaggerToPdf.ps1 -SwaggerUrl "https://your-api/swagger/v1/swagger.json" -OutputPdf "my-api.pdf"
+```
+
+### Execution policy
+
+If you hit an execution policy error, bypass it for the current process only:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\swaggerToPdf.ps1
+```
+
+### Azure DevOps pipeline (Windows agent)
+
+```yaml
+- task: PowerShell@2
+  displayName: 'Generate API Documentation PDF'
+  inputs:
+    filePath: 'swaggerToPdf.ps1'
+    arguments: '-SwaggerUrl "https://your-api/swagger/v1/swagger.json" -OutputPdf "api-docs.pdf"'
+
+- publish: $(System.DefaultWorkingDirectory)/api-docs.pdf
+  artifact: SwaggerDocs
+```
+
+---
+
+## Features
+
+- **Pre-flight checks** — verifies `curl` and Docker are available before doing anything
+- **Step-by-step logging** — numbered progress with color-coded output (easy to read in CI logs)
+- **Output validation** — exits with a clear error message if any step fails
+- **Auto cleanup** — removes all temp files after the PDF is generated
+- **Sensible defaults** — both URL and output filename are optional arguments
